@@ -4,20 +4,23 @@
     "payload": "eyJkb21haW4iOiJiYXNlLWJyb3MudmVyY2VsLmFwcCJ9",
     "signature": "+DMSTpl4oqQS2ALtWflY43ZBgvEO1NfUuSUF00NJyrl2e/8Y27qfo2VeLHNt+gCoAMWCDPiQsKRJwX0Qz8L7gBw="
   },
-  "baseBuilder": {
-    "allowedAddresses": ["0x0A4e5886f09997a3c71767736bb0c33D43a12B39"]
+  "frame": {
+    "version": "1",
+    "name": "BaseBros Greeter",
+    "homeUrl": "https://base-bros.vercel.app/",
+    "iconUrl": "https://base-bros.vercel.app/icon.png",
+    "imageUrl": "https://base-bros.vercel.app/image.png",
+    "splashImageUrl": "https://base-bros.vercel.app/splash.png",
+    "splashBackgroundColor": "#8a63d2",
+    "webhookUrl": "https://base-bros.vercel.app/api/webhook"
   },
   "miniapp": {
     "version": "1",
     "name": "BaseBros Greeter",
-    "subtitle": "Greet Base App users",
-    "description": "Send friendly greetings to active Base and Farcaster users.",
-    "iconUrl": "https://base-bros.vercel.app/icon.png",
-    "imageUrl": "https://base-bros.vercel.app/preview.png",
-    "splashImageUrl": "https://base-bros.vercel.app/splash.png",
-    "splashBackgroundColor": "#8a63d2",
     "homeUrl": "https://base-bros.vercel.app/",
-    "primaryCategory": "social",
-    "tags": ["base", "greetings", "social"]
+    "iconUrl": "https://base-bros.vercel.app/icon.png",
+    "imageUrl": "https://base-bros.vercel.app/image.png",
+    "splashImageUrl": "https://base-bros.vercel.app/splash.png",
+    "splashBackgroundColor": "#8a63d2"
   }
 }
