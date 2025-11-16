@@ -5,22 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseBros - Farcaster Greeter</title>
     
-    <!-- CRITICAL: Base Mini App Meta Tags -->
-    <meta name="fc:frame" content='{"version":"next","imageUrl":"https://base-bros.vercel.app/preview.png","button":{"title":"Open BaseBros","action":{"type":"launch_frame","url":"https://base-bros.vercel.app/"}}}' />
-    <meta name="fc:miniapp" content='{"version":"next","imageUrl":"https://base-bros.vercel.app/preview.png","button":{"title":"Open BaseBros","action":{"type":"launch_frame","url":"https://base-bros.vercel.app/"}}}' />
+    <!-- Base Mini App Meta Tags -->
+    <meta name="fc:frame" content='{"version":"next","imageUrl":"https://placehold.co/1200x630/8a63d2/white?text=BaseBros","button":{"title":"Open BaseBros","action":{"type":"launch_frame","url":"https://base-bros.vercel.app/"}}}' />
+    <meta name="fc:miniapp" content='{"version":"next","imageUrl":"https://placehold.co/1200x630/8a63d2/white?text=BaseBros","button":{"title":"Open BaseBros","action":{"type":"launch_frame","url":"https://base-bros.vercel.app/"}}}' />
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="BaseBros - Farcaster Greeter" />
     <meta property="og:description" content="Send friendly greetings to active Base and Farcaster users" />
-    <meta property="og:image" content="https://base-bros.vercel.app/preview.png" />
+    <meta property="og:image" content="https://placehold.co/1200x630/8a63d2/white?text=BaseBros" />
     <meta property="og:url" content="https://base-bros.vercel.app/" />
     <meta property="og:type" content="website" />
     
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="BaseBros - Farcaster Greeter" />
-    <meta name="twitter:description" content="Send friendly greetings to active Base and Farcaster users" />
-    <meta name="twitter:image" content="https://base-bros.vercel.app/preview.png" />
+    <!-- Farcaster Auth Kit -->
+    <script src="https://unpkg.com/@farcaster/auth-kit@1.2.0"></script>
+    <script src="https://unpkg.com/@farcaster/frame-sdk@0.2.2"></script>
     
     <style>
         :root {
@@ -234,6 +232,23 @@
             margin-top: 16px;
         }
 
+        .farcaster-signin-button {
+            background: linear-gradient(135deg, #8a63d2, #6C47FF);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
         .toast {
             position: fixed;
             bottom: 20px;
@@ -343,7 +358,9 @@
             <div style="font-size: 3rem; margin-bottom: 16px;">👋</div>
             <h3 style="margin-bottom: 8px;">Welcome to BaseBros</h3>
             <p style="color: #666; margin-bottom: 16px;">Connect your Farcaster account to start sending greetings</p>
-            <button id="authBtn" class="auth-btn">Connect Farcaster</button>
+            <button id="farcasterSigninButton" class="farcaster-signin-button">
+                <span>🔗</span> Sign in with Farcaster
+            </button>
         </div>
 
         <!-- Loading state -->
@@ -406,6 +423,16 @@
             <p style="color: #666;">Your message has been sent via Farcaster</p>
             <button id="sendAnotherBtn" class="submit-btn" style="margin-top: 16px;">Send Another Greeting</button>
         </div>
+
+        <!-- Connected User Info -->
+        <div id="connectedUser" class="user-info" style="display: none;">
+            <div class="avatar" id="connectedUserAvatar">U</div>
+            <div class="user-details">
+                <div class="user-name" id="connectedUserName">Connected User</div>
+                <div style="font-size: 0.875rem; color: #666;">You are connected</div>
+            </div>
+            <button id="disconnectBtn" style="background: none; border: none; color: #666; cursor: pointer;" title="Disconnect">🚪</button>
+        </div>
     </div>
 
     <!-- Toast notification -->
@@ -413,75 +440,148 @@
 
     <script>
         // =============================================================================
-        // BASE SDK INTEGRATION - ULTIMATE FIX
+        // BASE MINI APP INITIALIZATION - ULTIMATE FIX
         // =============================================================================
         
-        // Global function that Base will call
+        // Global function that Base will call - THIS IS CRITICAL
         window.miniAppReady = function() {
             console.log('✅ miniAppReady() called by Base platform');
             document.getElementById('loadingText').textContent = 'BaseBros is ready!';
+            // Hide splash screen
+            if (window.sdk && window.sdk.actions && window.sdk.actions.ready) {
+                window.sdk.actions.ready();
+            }
         };
 
-        // Initialize Base SDK with multiple fallbacks
-        async function initializeBaseSDK() {
+        // Initialize Base SDK
+        async function initializeBaseApp() {
             try {
-                console.log('🚀 Initializing Base SDK...');
+                console.log('🚀 Initializing Base Mini App...');
                 
-                // Method 1: Check for global SDK object
+                // Method 1: Direct SDK call
                 if (window.sdk && window.sdk.actions && window.sdk.actions.ready) {
-                    console.log('✅ Found window.sdk, calling ready()');
+                    console.log('✅ Calling sdk.actions.ready()');
                     await window.sdk.actions.ready();
                     return true;
                 }
                 
-                // Method 2: Check for Base object
+                // Method 2: Check for Base SDK
                 if (window.Base && window.Base.actions && window.Base.actions.ready) {
-                    console.log('✅ Found window.Base, calling ready()');
+                    console.log('✅ Calling Base.actions.ready()');
                     await window.Base.actions.ready();
                     return true;
                 }
                 
-                // Method 3: Check for ethereum provider
+                // Method 3: Check for ethereum provider (Base environment)
                 if (window.ethereum && window.ethereum.isMiniApp) {
-                    console.log('✅ Found Mini App environment');
-                    // The platform should call miniAppReady() automatically
+                    console.log('✅ Detected Base Mini App environment');
+                    // The platform will call miniAppReady()
                     return true;
-                }
-                
-                // Method 4: Try to load SDK dynamically
-                try {
-                    const { Base } = await import('https://cdn.base.org/base-sdk/2.4.2/base-sdk.min.js');
-                    const base = Base.initialize();
-                    await base.actions.ready();
-                    console.log('✅ Base SDK loaded dynamically and ready() called');
-                    return true;
-                } catch (e) {
-                    console.log('Dynamic SDK load failed, continuing without SDK');
                 }
                 
                 console.log('🌐 Running in standalone mode');
                 return false;
                 
             } catch (error) {
-                console.log('Base SDK initialization attempt failed:', error);
+                console.log('Base initialization attempt:', error);
                 return false;
             }
         }
 
-        // Call ready multiple times to ensure it's called
-        async function ensureBaseReady() {
-            // First attempt
-            await initializeBaseSDK();
-            
-            // Second attempt after delay
-            setTimeout(async () => {
-                await initializeBaseSDK();
-            }, 500);
-            
-            // Third attempt
-            setTimeout(async () => {
-                await initializeBaseSDK();
-            }, 1500);
+        // =============================================================================
+        // FARCASTER AUTH KIT INTEGRATION - REAL IMPLEMENTATION
+        // =============================================================================
+        
+        let farcasterAuthKit = null;
+        let userData = null;
+
+        // Initialize Farcaster Auth Kit
+        async function initializeFarcasterAuth() {
+            try {
+                console.log('🔐 Initializing Farcaster Auth Kit...');
+                
+                // Check if Farcaster Auth Kit is available
+                if (typeof FarcasterAuthKit === 'undefined') {
+                    console.log('Farcaster Auth Kit not available, using fallback');
+                    return null;
+                }
+
+                // Create Auth Kit configuration
+                const config = {
+                    relay: "https://relay.farcaster.xyz",
+                    rpcUrl: "https://mainnet.optimism.io",
+                    domain: "base-bros.vercel.app",
+                    siweUri: "https://base-bros.vercel.app"
+                };
+
+                farcasterAuthKit = new FarcasterAuthKit(config);
+                await farcasterAuthKit.init();
+                
+                console.log('✅ Farcaster Auth Kit initialized');
+                return farcasterAuthKit;
+                
+            } catch (error) {
+                console.error('❌ Farcaster Auth Kit initialization failed:', error);
+                return null;
+            }
+        }
+
+        // Sign in with Farcaster
+        async function signInWithFarcaster() {
+            try {
+                const signinButton = document.getElementById('farcasterSigninButton');
+                signinButton.disabled = true;
+                signinButton.innerHTML = '<span>⏳</span> Connecting...';
+
+                if (!farcasterAuthKit) {
+                    throw new Error('Farcaster Auth Kit not initialized');
+                }
+
+                // Start authentication flow
+                await farcasterAuthKit.authenticate();
+                
+                // Get user data
+                userData = farcasterAuthKit.getUser();
+                
+                if (userData && userData.fid) {
+                    console.log('✅ Farcaster authentication successful:', userData);
+                    showToast('Successfully connected to Farcaster!');
+                    showConnectedUser(userData);
+                    loadActiveUsers();
+                    return true;
+                } else {
+                    throw new Error('Authentication failed - no user data');
+                }
+                
+            } catch (error) {
+                console.error('❌ Farcaster sign in failed:', error);
+                showToast('Failed to connect to Farcaster', true);
+                
+                const signinButton = document.getElementById('farcasterSigninButton');
+                signinButton.disabled = false;
+                signinButton.innerHTML = '<span>🔗</span> Sign in with Farcaster';
+                
+                return false;
+            }
+        }
+
+        // Show connected user info
+        function showConnectedUser(user) {
+            document.getElementById('connectedUserAvatar').textContent = 
+                user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+            document.getElementById('connectedUserName').textContent = 
+                user.displayName || `User #${user.fid}`;
+            document.getElementById('connectedUser').style.display = 'flex';
+        }
+
+        // Sign out
+        function signOut() {
+            if (farcasterAuthKit) {
+                farcasterAuthKit.signOut();
+            }
+            userData = null;
+            document.getElementById('connectedUser').style.display = 'none';
+            showAuthSection();
         }
 
         // =============================================================================
@@ -498,7 +598,7 @@
 
         // DOM elements
         const authSection = document.getElementById('authSection');
-        const authBtn = document.getElementById('authBtn');
+        const farcasterSigninButton = document.getElementById('farcasterSigninButton');
         const loadingState = document.getElementById('loadingState');
         const loadingText = document.getElementById('loadingText');
         const userSelection = document.getElementById('userSelection');
@@ -515,6 +615,7 @@
         const submitBtn = document.getElementById('submitBtn');
         const successMessage = document.getElementById('successMessage');
         const sendAnotherBtn = document.getElementById('sendAnotherBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
         const toast = document.getElementById('toast');
 
         // State
@@ -527,23 +628,20 @@
             try {
                 console.log('🚀 Starting BaseBros app...');
                 
-                // STEP 1: Ensure Base SDK is ready (multiple attempts)
-                await ensureBaseReady();
+                // STEP 1: Initialize Base Mini App
+                await initializeBaseApp();
                 
-                // STEP 2: Check authentication
-                loadingText.textContent = 'Checking authentication...';
+                // STEP 2: Initialize Farcaster Auth
+                await initializeFarcasterAuth();
                 
-                // Simulate Farcaster auth check
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                const isAuthenticated = localStorage.getItem('farcaster_authenticated') === 'true';
-                
-                if (!isAuthenticated) {
+                // STEP 3: Check if user is already authenticated
+                if (userData && userData.fid) {
+                    console.log('✅ User already authenticated');
+                    showConnectedUser(userData);
+                    await loadActiveUsers();
+                } else {
                     showAuthSection();
-                    return;
                 }
-
-                // STEP 3: Load active users
-                await loadActiveUsers();
 
             } catch (error) {
                 console.error('❌ Initialization failed:', error);
@@ -560,6 +658,7 @@
         // Load active users
         async function loadActiveUsers() {
             try {
+                loadingState.style.display = 'block';
                 loadingText.textContent = 'Finding active Farcaster users...';
                 
                 // Simulate API call
@@ -583,6 +682,7 @@
                 
                 // Show user selection
                 loadingState.style.display = 'none';
+                authSection.style.display = 'none';
                 userSelection.style.display = 'block';
                 renderUserList();
                 setupEventListeners();
@@ -593,6 +693,7 @@
             }
         }
 
+        // [Rest of the functions remain the same as previous version...]
         // Show message when no active users found
         function showNoActiveUsers() {
             loadingState.innerHTML = `
@@ -659,50 +760,16 @@
 
         // Set up event listeners
         function setupEventListeners() {
-            authBtn.addEventListener('click', handleAuthClick);
+            farcasterSigninButton.addEventListener('click', signInWithFarcaster);
+            disconnectBtn.addEventListener('click', signOut);
             
             emojiButtons.forEach(button => {
                 button.addEventListener('click', () => selectEmoji(button));
-                button.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        selectEmoji(button);
-                    }
-                });
             });
 
             replyText.addEventListener('input', updateSubmitButton);
             submitBtn.addEventListener('click', sendGreeting);
-            
-            replyText.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key === 'Enter') {
-                    sendGreeting();
-                }
-            });
-
             sendAnotherBtn.addEventListener('click', resetToUserSelection);
-        }
-
-        // Handle authentication
-        async function handleAuthClick() {
-            try {
-                authBtn.disabled = true;
-                authBtn.textContent = 'Connecting...';
-                
-                // Simulate auth
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                localStorage.setItem('farcaster_authenticated', 'true');
-                
-                authSection.style.display = 'none';
-                loadingState.style.display = 'block';
-                await loadActiveUsers();
-                
-            } catch (error) {
-                console.error('❌ Auth failed:', error);
-                showError('Authentication failed. Please try again.');
-                authBtn.disabled = false;
-                authBtn.textContent = 'Connect Farcaster';
-            }
         }
 
         // Handle emoji selection
