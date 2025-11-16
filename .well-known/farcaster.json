@@ -3,8 +3,7 @@
     "header": "eyJmaWQiOjUwMjE3NywidHlwZSI6ImF1dGgiLCJrZXkiOiIweDI4ZTBBZWViNTY5ZjA1RUQ0Y2Y5NmE4M0Y0RjBFMTE1NzdCZTc5MUEifQ",
     "payload": "eyJkb21haW4iOiJiYXNlLWJyb3MudmVyY2VsLmFwcCJ9",
     "signature": "BZpEGQfW00EPabt+LZlL3DgsxceQy4XS+Zerr93ZiVZQN/N4EgkNrGmQjUbG7ZqxKb8Ee+CQR06LFAHZRjAouhs="
-  }
-},
+  },
   "baseBuilder": {
     "allowedAddresses": ["0x0A4e5886f09997a3c71767736bb0c33D43a12B39"]
   },
@@ -21,3 +20,4 @@
     "primaryCategory": "social",
     "tags": ["base", "greetings", "social"]
   }
+}
