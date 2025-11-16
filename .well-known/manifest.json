@@ -1,0 +1,20 @@
+{
+  "frame": {
+    "name": "BaseBros Greeter",
+    "version": "1",
+    "iconUrl": "https://base-bros.vercel.app/icon.png",
+    "homeUrl": "https://base-bros.vercel.app",
+    "imageUrl": "https://base-bros.vercel.app/image.png",
+    "splashImageUrl": "https://base-bros.vercel.app/splash.png",
+    "splashBackgroundColor": "#8a63d2",
+    "webhookUrl": "https://base-bros.vercel.app/api/webhook",
+    "subtitle": "Greet Base App users",
+    "description": "Send friendly greetings to active Base and Farcaster users.",
+    "primaryCategory": "social"
+  },
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  }
+}
