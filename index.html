@@ -4,6 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseBros - Farcaster Greeter</title>
+    
+    <!-- CRITICAL: Base Mini App Meta Tags -->
+    <meta name="fc:frame" content='{"version":"next","imageUrl":"https://base-bros.vercel.app/preview.png","button":{"title":"Open BaseBros","action":{"type":"launch_frame","url":"https://base-bros.vercel.app/"}}}' />
+    <meta name="fc:miniapp" content='{"version":"next","imageUrl":"https://base-bros.vercel.app/preview.png","button":{"title":"Open BaseBros","action":{"type":"launch_frame","url":"https://base-bros.vercel.app/"}}}' />
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="BaseBros - Farcaster Greeter" />
+    <meta property="og:description" content="Send friendly greetings to active Base and Farcaster users" />
+    <meta property="og:image" content="https://base-bros.vercel.app/preview.png" />
+    <meta property="og:url" content="https://base-bros.vercel.app/" />
+    <meta property="og:type" content="website" />
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BaseBros - Farcaster Greeter" />
+    <meta name="twitter:description" content="Send friendly greetings to active Base and Farcaster users" />
+    <meta name="twitter:image" content="https://base-bros.vercel.app/preview.png" />
+    
     <style>
         :root {
             --primary-color: #8a63d2;
@@ -395,85 +413,75 @@
 
     <script>
         // =============================================================================
-        // BASE SDK FIX - CRITICAL: Handle Base Mini App initialization
+        // BASE SDK INTEGRATION - ULTIMATE FIX
         // =============================================================================
         
-        // Method 1: Direct SDK initialization
-        async function initializeBaseApp() {
+        // Global function that Base will call
+        window.miniAppReady = function() {
+            console.log('✅ miniAppReady() called by Base platform');
+            document.getElementById('loadingText').textContent = 'BaseBros is ready!';
+        };
+
+        // Initialize Base SDK with multiple fallbacks
+        async function initializeBaseSDK() {
             try {
-                console.log('🚀 Starting Base SDK initialization...');
+                console.log('🚀 Initializing Base SDK...');
                 
-                // Check if we're in a Mini App environment
-                if (typeof window !== 'undefined' && window.ethereum && window.ethereum.isMiniApp) {
-                    console.log('📱 Detected Base Mini App environment');
-                    
-                    // Try to load Base SDK dynamically
-                    try {
-                        const { Base } = await import('https://cdn.base.org/base-sdk/2.4.2/base-sdk.min.js');
-                        const base = Base.initialize();
-                        
-                        // CRITICAL: Call ready() to dismiss splash screen
-                        await base.actions.ready();
-                        console.log('✅ Base SDK ready() called successfully');
-                        
-                        return base;
-                    } catch (sdkError) {
-                        console.log('Base SDK import failed, trying alternative method:', sdkError);
-                    }
+                // Method 1: Check for global SDK object
+                if (window.sdk && window.sdk.actions && window.sdk.actions.ready) {
+                    console.log('✅ Found window.sdk, calling ready()');
+                    await window.sdk.actions.ready();
+                    return true;
                 }
                 
-                // Alternative: Check for global Base object
-                if (window.Base) {
-                    console.log('🔄 Using global Base object');
-                    const base = window.Base.initialize();
+                // Method 2: Check for Base object
+                if (window.Base && window.Base.actions && window.Base.actions.ready) {
+                    console.log('✅ Found window.Base, calling ready()');
+                    await window.Base.actions.ready();
+                    return true;
+                }
+                
+                // Method 3: Check for ethereum provider
+                if (window.ethereum && window.ethereum.isMiniApp) {
+                    console.log('✅ Found Mini App environment');
+                    // The platform should call miniAppReady() automatically
+                    return true;
+                }
+                
+                // Method 4: Try to load SDK dynamically
+                try {
+                    const { Base } = await import('https://cdn.base.org/base-sdk/2.4.2/base-sdk.min.js');
+                    const base = Base.initialize();
                     await base.actions.ready();
-                    console.log('✅ Base SDK ready() called via global object');
-                    return base;
+                    console.log('✅ Base SDK loaded dynamically and ready() called');
+                    return true;
+                } catch (e) {
+                    console.log('Dynamic SDK load failed, continuing without SDK');
                 }
                 
                 console.log('🌐 Running in standalone mode');
-                return null;
+                return false;
                 
             } catch (error) {
-                console.error('❌ Base SDK initialization failed:', error);
-                return null;
+                console.log('Base SDK initialization attempt failed:', error);
+                return false;
             }
         }
 
-        // Method 2: Direct ready call for Base environment
-        async function callBaseReady() {
-            try {
-                // Check multiple indicators of Base environment
-                const isBaseApp = (
-                    window.ethereum?.isMiniApp || 
-                    window.location.href.includes('base.app') ||
-                    navigator.userAgent.includes('Base') ||
-                    document.referrer.includes('base.app')
-                );
-                
-                if (isBaseApp) {
-                    console.log('🏠 Detected Base App environment, calling ready()');
-                    
-                    // Multiple ways to call ready()
-                    if (window.sdk?.actions?.ready) {
-                        await window.sdk.actions.ready();
-                        console.log('✅ sdk.actions.ready() called');
-                    }
-                    
-                    if (window.Base?.actions?.ready) {
-                        await window.Base.actions.ready();
-                        console.log('✅ Base.actions.ready() called');
-                    }
-                    
-                    // Try global ready function
-                    if (window.miniAppReady) {
-                        window.miniAppReady();
-                        console.log('✅ miniAppReady() called');
-                    }
-                }
-            } catch (error) {
-                console.log('Base ready call failed (non-critical):', error);
-            }
+        // Call ready multiple times to ensure it's called
+        async function ensureBaseReady() {
+            // First attempt
+            await initializeBaseSDK();
+            
+            // Second attempt after delay
+            setTimeout(async () => {
+                await initializeBaseSDK();
+            }, 500);
+            
+            // Third attempt
+            setTimeout(async () => {
+                await initializeBaseSDK();
+            }, 1500);
         }
 
         // =============================================================================
@@ -517,18 +525,16 @@
         // Initialize the app
         async function init() {
             try {
-                console.log('🚀 Starting BaseBros initialization...');
+                console.log('🚀 Starting BaseBros app...');
                 
-                // STEP 1: Call Base ready immediately
-                await callBaseReady();
+                // STEP 1: Ensure Base SDK is ready (multiple attempts)
+                await ensureBaseReady();
                 
-                // STEP 2: Initialize Base SDK
-                await initializeBaseApp();
-                
-                // STEP 3: Show loading state
+                // STEP 2: Check authentication
                 loadingText.textContent = 'Checking authentication...';
                 
                 // Simulate Farcaster auth check
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 const isAuthenticated = localStorage.getItem('farcaster_authenticated') === 'true';
                 
                 if (!isAuthenticated) {
@@ -536,7 +542,7 @@
                     return;
                 }
 
-                // STEP 4: Load active users
+                // STEP 3: Load active users
                 await loadActiveUsers();
 
             } catch (error) {
@@ -806,23 +812,18 @@
         }
 
         // =============================================================================
-        // START THE APP - CRITICAL: Multiple ready() attempts
+        // START THE APP
         // =============================================================================
         
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 BaseBros DOM loaded, starting app...');
-            
-            // Multiple attempts to call ready()
-            setTimeout(() => callBaseReady(), 100);
-            setTimeout(() => callBaseReady(), 500);
-            setTimeout(() => callBaseReady(), 1000);
-            
             init();
         });
 
-        // Global function for Base to call
-        window.miniAppReady = function() {
-            console.log('✅ miniAppReady() called by Base');
+        // Export for global access
+        window.BaseBros = {
+            init,
+            miniAppReady: window.miniAppReady
         };
     </script>
 </body>
