@@ -1,0 +1,43 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjUwMjE3NywidHlwZSI6ImF1dGgiLCJrZXkiOiIweDI4ZTBBZWViNTY5ZjA1RUQ0Y2Y5NmE4M0Y0RjBFMTE1NzdCZTc5MUEifQ",
+    "payload": "eyJkb21haW4iOiJiYXNlLWJyb3MudmVyY2VsLmFwcCJ9",
+    "signature": "Ie/qxfZvz3lfh4QuS/XTmMc+tV25r68/1U/er5igcN4VB89MxPlzba4PV3HPMb7AYT1oIIBIF3F99u58xLzx0Bw="
+  },
+  "frame": {
+    "version": "1",
+    "name": "BaseBros Greeter",
+    "subtitle": "Connect and greet Base App users",
+    "description": "Send friendly greetings to active Base and Farcaster users directly through Farcaster.",
+    "iconUrl": "https://base-bros.vercel.app/icon.png",
+    "imageUrl": "https://base-bros.vercel.app/preview.png",
+    "splashImageUrl": "https://base-bros.vercel.app/splash.png",
+    "splashBackgroundColor": "#8a63d2",
+    "homeUrl": "https://base-bros.vercel.app/",
+    "primaryCategory": "social",
+    "tags": ["base", "greetings", "social", "farcaster", "community"],
+    "permissions": [
+      "cast_read",
+      "cast_write", 
+      "profile_read"
+    ],
+    "supportedClients": [
+      "warpcast",
+      "supercast",
+      "farcaster"
+    ]
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "BaseBros Greeter",
+    "subtitle": "Connect and greet Base App users",
+    "description": "Send friendly greetings to active Base and Farcaster users directly through Farcaster.",
+    "iconUrl": "https://base-bros.vercel.app/icon.png",
+    "imageUrl": "https://base-bros.vercel.app/preview.png",
+    "splashImageUrl": "https://base-bros.vercel.app/splash.png",
+    "splashBackgroundColor": "#8a63d2",
+    "homeUrl": "https://base-bros.vercel.app/",
+    "primaryCategory": "social",
+    "tags": ["base", "greetings", "social", "farcaster", "community"]
+  }
+}
