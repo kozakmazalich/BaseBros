@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseBros - Farcaster Greeter</title>
-    <script src="https://cdn.base.org/base-sdk/2.4.2/base-sdk.min.js"></script>
     <style>
         :root {
             --primary-color: #8a63d2;
@@ -85,8 +84,6 @@
             justify-content: center;
             font-weight: bold;
             font-size: 1.2rem;
-            background-size: cover;
-            background-position: center;
         }
 
         .user-details {
@@ -302,8 +299,6 @@
             justify-content: center;
             font-size: 0.75rem;
             font-weight: bold;
-            background-size: cover;
-            background-position: center;
         }
 
         @media (max-width: 480px) {
@@ -400,120 +395,84 @@
 
     <script>
         // =============================================================================
-        // BASE SDK INTEGRATION - FIX FOR "READY NOT CALLED"
+        // BASE SDK FIX - CRITICAL: Handle Base Mini App initialization
         // =============================================================================
         
-        async function initializeBaseSDK() {
+        // Method 1: Direct SDK initialization
+        async function initializeBaseApp() {
             try {
-                // Check if we're running in Base Mini App environment
-                if (window.ethereum && window.ethereum.isMiniApp && window.Base) {
-                    console.log('🚀 Initializing Base SDK...');
+                console.log('🚀 Starting Base SDK initialization...');
+                
+                // Check if we're in a Mini App environment
+                if (typeof window !== 'undefined' && window.ethereum && window.ethereum.isMiniApp) {
+                    console.log('📱 Detected Base Mini App environment');
                     
-                    // Initialize Base SDK
-                    const base = window.Base.initialize();
-                    
-                    // CRITICAL: Call ready() to dismiss splash screen
-                    await base.actions.ready();
-                    console.log('✅ Base SDK ready() called successfully - splash screen dismissed');
-                    
-                    return base;
-                } else {
-                    console.log('🌐 Running in standalone mode (not in Base Mini App)');
-                    return null;
+                    // Try to load Base SDK dynamically
+                    try {
+                        const { Base } = await import('https://cdn.base.org/base-sdk/2.4.2/base-sdk.min.js');
+                        const base = Base.initialize();
+                        
+                        // CRITICAL: Call ready() to dismiss splash screen
+                        await base.actions.ready();
+                        console.log('✅ Base SDK ready() called successfully');
+                        
+                        return base;
+                    } catch (sdkError) {
+                        console.log('Base SDK import failed, trying alternative method:', sdkError);
+                    }
                 }
+                
+                // Alternative: Check for global Base object
+                if (window.Base) {
+                    console.log('🔄 Using global Base object');
+                    const base = window.Base.initialize();
+                    await base.actions.ready();
+                    console.log('✅ Base SDK ready() called via global object');
+                    return base;
+                }
+                
+                console.log('🌐 Running in standalone mode');
+                return null;
+                
             } catch (error) {
                 console.error('❌ Base SDK initialization failed:', error);
                 return null;
             }
         }
 
-        // =============================================================================
-        // FARCASTER CONFIGURATION
-        // =============================================================================
-        
-        const FARCASTER_CONFIG = {
-            clientId: 'base-bros-app',
-            redirectUri: 'https://base-bros.vercel.app/',
-            scope: 'cast_read,cast_write,profile'
-        };
-
-        // =============================================================================
-        // FARCASTER AUTHENTICATION
-        // =============================================================================
-
-        function getFarcasterAccessToken() {
-            return localStorage.getItem('farcaster_access_token');
-        }
-
-        function storeFarcasterAccessToken(token) {
-            localStorage.setItem('farcaster_access_token', token);
-        }
-
-        function clearFarcasterAccessToken() {
-            localStorage.removeItem('farcaster_access_token');
-        }
-
-        function isFarcasterAuthenticated() {
-            return !!getFarcasterAccessToken();
-        }
-
-        async function authenticateWithFarcaster() {
+        // Method 2: Direct ready call for Base environment
+        async function callBaseReady() {
             try {
-                // Simulate Farcaster authentication
-                console.log('🔐 Simulating Farcaster authentication...');
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Check multiple indicators of Base environment
+                const isBaseApp = (
+                    window.ethereum?.isMiniApp || 
+                    window.location.href.includes('base.app') ||
+                    navigator.userAgent.includes('Base') ||
+                    document.referrer.includes('base.app')
+                );
                 
-                // Store mock token
-                storeFarcasterAccessToken('mock_farcaster_token_' + Date.now());
-                console.log('✅ Farcaster authentication successful');
-                
-                return true;
+                if (isBaseApp) {
+                    console.log('🏠 Detected Base App environment, calling ready()');
+                    
+                    // Multiple ways to call ready()
+                    if (window.sdk?.actions?.ready) {
+                        await window.sdk.actions.ready();
+                        console.log('✅ sdk.actions.ready() called');
+                    }
+                    
+                    if (window.Base?.actions?.ready) {
+                        await window.Base.actions.ready();
+                        console.log('✅ Base.actions.ready() called');
+                    }
+                    
+                    // Try global ready function
+                    if (window.miniAppReady) {
+                        window.miniAppReady();
+                        console.log('✅ miniAppReady() called');
+                    }
+                }
             } catch (error) {
-                console.error('❌ Farcaster authentication failed:', error);
-                return false;
-            }
-        }
-
-        // =============================================================================
-        // FARCASTER API INTEGRATION
-        // =============================================================================
-
-        async function fetchActiveFarcasterUsers() {
-            try {
-                console.log('📡 Fetching active Farcaster users...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Simulated user data
-                return [
-                    { fid: 1, username: "alex.eth", displayName: "Alex", avatar: "A", postsLast7Days: 3, totalPosts: 42, followers: 128, verified: true, lastActive: new Date().toISOString() },
-                    { fid: 2, username: "taytay.eth", displayName: "Taylor", avatar: "T", postsLast7Days: 1, totalPosts: 18, followers: 89, verified: false, lastActive: new Date().toISOString() },
-                    { fid: 3, username: "jordan.base", displayName: "Jordan", avatar: "J", postsLast7Days: 1, totalPosts: 67, followers: 215, verified: true, lastActive: new Date().toISOString() },
-                    { fid: 4, username: "casey.eth", displayName: "Casey", avatar: "C", postsLast7Days: 5, totalPosts: 124, followers: 342, verified: true, lastActive: new Date().toISOString() },
-                    { fid: 5, username: "morgan.base", displayName: "Morgan", avatar: "M", postsLast7Days: 2, totalPosts: 56, followers: 167, verified: false, lastActive: new Date().toISOString() }
-                ];
-            } catch (error) {
-                console.error('❌ Error fetching Farcaster users:', error);
-                return [];
-            }
-        }
-
-        async function sendFarcasterGreeting(messageData) {
-            try {
-                console.log('📤 Sending Farcaster greeting...');
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Simulate successful send
-                const result = {
-                    success: true,
-                    castHash: '0x' + Math.random().toString(16).substr(2, 64),
-                    timestamp: new Date().toISOString()
-                };
-                
-                console.log('✅ Farcaster greeting sent successfully:', result);
-                return result;
-            } catch (error) {
-                console.error('❌ Error sending Farcaster greeting:', error);
-                throw error;
+                console.log('Base ready call failed (non-critical):', error);
             }
         }
 
@@ -558,18 +517,26 @@
         // Initialize the app
         async function init() {
             try {
-                // STEP 1: Initialize Base SDK FIRST
-                await initializeBaseSDK();
+                console.log('🚀 Starting BaseBros initialization...');
                 
-                // STEP 2: Check authentication
+                // STEP 1: Call Base ready immediately
+                await callBaseReady();
+                
+                // STEP 2: Initialize Base SDK
+                await initializeBaseApp();
+                
+                // STEP 3: Show loading state
                 loadingText.textContent = 'Checking authentication...';
                 
-                if (!isFarcasterAuthenticated()) {
+                // Simulate Farcaster auth check
+                const isAuthenticated = localStorage.getItem('farcaster_authenticated') === 'true';
+                
+                if (!isAuthenticated) {
                     showAuthSection();
                     return;
                 }
 
-                // STEP 3: Load active users
+                // STEP 4: Load active users
                 await loadActiveUsers();
 
             } catch (error) {
@@ -588,9 +555,19 @@
         async function loadActiveUsers() {
             try {
                 loadingText.textContent = 'Finding active Farcaster users...';
-                activeUsers = await fetchActiveFarcasterUsers();
                 
-                // Filter active users (posted at least once this week)
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Simulated user data
+                activeUsers = [
+                    { fid: 1, username: "alex.eth", displayName: "Alex", avatar: "A", postsLast7Days: 3, totalPosts: 42, followers: 128, verified: true },
+                    { fid: 2, username: "taytay.eth", displayName: "Taylor", avatar: "T", postsLast7Days: 1, totalPosts: 18, followers: 89, verified: false },
+                    { fid: 3, username: "jordan.base", displayName: "Jordan", avatar: "J", postsLast7Days: 1, totalPosts: 67, followers: 215, verified: true },
+                    { fid: 4, username: "casey.eth", displayName: "Casey", avatar: "C", postsLast7Days: 5, totalPosts: 124, followers: 342, verified: true }
+                ];
+                
+                // Filter active users
                 activeUsers = activeUsers.filter(user => user.postsLast7Days >= 1);
                 
                 if (activeUsers.length === 0) {
@@ -646,7 +623,7 @@
         function selectUser(user) {
             selectedUser = user;
             
-            // Update UI to show selected user
+            // Update UI
             document.querySelectorAll('.user-item').forEach(item => {
                 item.classList.remove('selected');
             });
@@ -657,13 +634,13 @@
                 userItems[selectedIndex].classList.add('selected');
             }
             
-            // Update user info display
+            // Update user info
             userAvatar.textContent = user.avatar;
             userName.textContent = `${user.displayName} (@${user.username})`;
             userPosts.textContent = `📝 ${user.totalPosts} posts`;
             userFollowers.textContent = `👥 ${user.followers} followers`;
             
-            // Show user info and greeting section
+            // Show sections
             selectedUserInfo.style.display = 'flex';
             greetingSection.style.display = 'block';
             
@@ -671,24 +648,15 @@
             const randomGreeting = greetingVariants[Math.floor(Math.random() * greetingVariants.length)];
             greetingText.textContent = randomGreeting;
             
-            // Reset form
             resetForm();
-            
-            // Scroll to greeting section
-            greetingSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        // Set up all event listeners
+        // Set up event listeners
         function setupEventListeners() {
-            // Auth button
             authBtn.addEventListener('click', handleAuthClick);
             
-            // Emoji button clicks
             emojiButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    selectEmoji(button);
-                });
-                
+                button.addEventListener('click', () => selectEmoji(button));
                 button.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -697,43 +665,35 @@
                 });
             });
 
-            // Text area input
             replyText.addEventListener('input', updateSubmitButton);
-
-            // Submit button
             submitBtn.addEventListener('click', sendGreeting);
             
-            // Allow submitting with Ctrl+Enter in text area
             replyText.addEventListener('keydown', (e) => {
                 if (e.ctrlKey && e.key === 'Enter') {
                     sendGreeting();
                 }
             });
 
-            // Send another button
             sendAnotherBtn.addEventListener('click', resetToUserSelection);
         }
 
-        // Handle authentication click
+        // Handle authentication
         async function handleAuthClick() {
             try {
                 authBtn.disabled = true;
                 authBtn.textContent = 'Connecting...';
                 
-                const success = await authenticateWithFarcaster();
+                // Simulate auth
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                localStorage.setItem('farcaster_authenticated', 'true');
                 
-                if (success) {
-                    authSection.style.display = 'none';
-                    loadingState.style.display = 'block';
-                    await loadActiveUsers();
-                } else {
-                    showError('Authentication failed. Please try again.');
-                    authBtn.disabled = false;
-                    authBtn.textContent = 'Connect Farcaster';
-                }
+                authSection.style.display = 'none';
+                loadingState.style.display = 'block';
+                await loadActiveUsers();
+                
             } catch (error) {
-                console.error('❌ Auth click failed:', error);
-                showError('Authentication error. Please try again.');
+                console.error('❌ Auth failed:', error);
+                showError('Authentication failed. Please try again.');
                 authBtn.disabled = false;
                 authBtn.textContent = 'Connect Farcaster';
             }
@@ -753,13 +713,13 @@
             updateSubmitButton();
         }
 
-        // Update submit button state
+        // Update submit button
         function updateSubmitButton() {
             const hasReaction = selectedEmoji || replyText.value.trim().length > 0;
             submitBtn.disabled = !hasReaction;
         }
 
-        // Send greeting via Farcaster
+        // Send greeting
         async function sendGreeting() {
             if (!selectedUser) return;
             
@@ -777,8 +737,9 @@
                     timestamp: new Date().toISOString()
                 };
                 
-                // Send via Farcaster API
-                await sendFarcasterGreeting(messageData);
+                // Simulate send
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                console.log('✅ Greeting sent:', messageData);
                 
                 showSuccess();
                 
@@ -787,36 +748,16 @@
                 submitBtn.textContent = 'Failed - Try Again';
                 submitBtn.classList.remove('sending');
                 submitBtn.disabled = false;
-                
-                showToast(`Failed to send: ${error.message}`, true);
+                showToast('Failed to send greeting', true);
             }
         }
 
-        // Build the greeting message for Farcaster
-        function buildGreetingMessage(messageData) {
-            let message = `Hey @${messageData.toUsername}! 👋\n\n`;
-            message += `${messageData.greeting}\n\n`;
-            
-            if (messageData.emoji) {
-                message += `Reaction: ${messageData.emoji}\n`;
-            }
-            
-            if (messageData.personalMessage) {
-                message += `\n${messageData.personalMessage}\n`;
-            }
-            
-            message += `\n- Sent via BaseBros 🎉`;
-            
-            return message;
-        }
-
-        // Show success message
+        // Show success
         function showSuccess() {
             greetingSection.style.display = 'none';
             selectedUserInfo.style.display = 'none';
             userSelection.style.display = 'none';
             successMessage.style.display = 'block';
-            
             showToast('Greeting sent via Farcaster!');
         }
 
@@ -827,11 +768,10 @@
             selectedUserInfo.style.display = 'none';
             greetingSection.style.display = 'none';
             selectedUser = null;
-            
             resetForm();
         }
 
-        // Show toast notification
+        // Show toast
         function showToast(message, isError = false) {
             toast.textContent = message;
             toast.className = 'toast' + (isError ? ' error' : '');
@@ -842,7 +782,7 @@
             }, 4000);
         }
 
-        // Show error message
+        // Show error
         function showError(message) {
             loadingState.innerHTML = `
                 <div style="font-size: 3rem; margin-bottom: 16px;">❌</div>
@@ -861,19 +801,29 @@
             selectedEmoji = null;
             replyText.value = '';
             updateSubmitButton();
-            
             submitBtn.textContent = 'Send Greeting via Farcaster';
             submitBtn.classList.remove('sending');
         }
 
         // =============================================================================
-        // START THE APP
+        // START THE APP - CRITICAL: Multiple ready() attempts
         // =============================================================================
         
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Starting BaseBros app...');
+            console.log('🚀 BaseBros DOM loaded, starting app...');
+            
+            // Multiple attempts to call ready()
+            setTimeout(() => callBaseReady(), 100);
+            setTimeout(() => callBaseReady(), 500);
+            setTimeout(() => callBaseReady(), 1000);
+            
             init();
         });
+
+        // Global function for Base to call
+        window.miniAppReady = function() {
+            console.log('✅ miniAppReady() called by Base');
+        };
     </script>
 </body>
 </html>
